@@ -1,21 +1,41 @@
 # 監視する企業の一覧。
-# manage.py で追加・削除するか、このファイルを直接編集してください。
+# チャットで「追加して/外して」と指示するか、manage.py、もしくは直接編集で管理できます。
 #
 # 各企業は 1つ以上の source を持ちます:
 #   type: rss   -> RSS/Atom フィードのURL（最も安定。推奨）
 #   type: html  -> ニュース一覧ページのURL。item_selector で記事リンクを指定
 #
-# 下記はサンプルです。実在のURLに置き換えてください。
+# 現在は Google ニュースのRSS（企業名クエリ）で監視しています。
+# 各社の公式サイトは bot ブロックでスクレイピングが不安定なため、
+# 安定して取得できる Google ニュースRSSを採用しています。
+# 公式プレスリリースのRSSが判明した企業は、その source を追加/差し替え可能です。
 companies:
-  - id: example_rss
-    name: サンプル企業（RSS）
+  - id: sony
+    name: ソニーグループ
     sources:
       - type: rss
-        url: https://www.example.com/news/feed.xml
+        url: "https://news.google.com/rss/search?q=%22%E3%82%BD%E3%83%8B%E3%83%BC%E3%82%B0%E3%83%AB%E3%83%BC%E3%83%97%22&hl=ja&gl=JP&ceid=JP:ja"
 
-  - id: example_html
-    name: サンプル企業（HTML）
+  - id: toshiba
+    name: 東芝
     sources:
-      - type: html
-        url: https://www.example.com/news/
-        item_selector: "a.news-list__link"
+      - type: rss
+        url: "https://news.google.com/rss/search?q=%22%E6%9D%B1%E8%8A%9D%22%20-%22%E6%9D%B1%E8%8A%9D%E3%83%86%E3%83%83%E3%82%AF%22&hl=ja&gl=JP&ceid=JP:ja"
+
+  - id: toshiba_tec
+    name: 東芝テック
+    sources:
+      - type: rss
+        url: "https://news.google.com/rss/search?q=%22%E6%9D%B1%E8%8A%9D%E3%83%86%E3%83%83%E3%82%AF%22&hl=ja&gl=JP&ceid=JP:ja"
+
+  - id: baycurrent
+    name: ベイカレント
+    sources:
+      - type: rss
+        url: "https://news.google.com/rss/search?q=%22%E3%83%99%E3%82%A4%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%88%22&hl=ja&gl=JP&ceid=JP:ja"
+
+  - id: tepco
+    name: 東京電力
+    sources:
+      - type: rss
+        url: "https://news.google.com/rss/search?q=%22%E6%9D%B1%E4%BA%AC%E9%9B%BB%E5%8A%9B%22&hl=ja&gl=JP&ceid=JP:ja"
