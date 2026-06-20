@@ -2,8 +2,8 @@ name: company-news-monitor
 
 on:
   schedule:
-    # 毎日 00:00 UTC = 09:00 JST に実行
-    - cron: "0 0 * * *"
+    # 6時間ごとに実行（00/06/12/18 UTC = 09/15/21/03 JST）
+    - cron: "0 */6 * * *"
   workflow_dispatch: {}   # 手動実行も可能
 
 permissions:
