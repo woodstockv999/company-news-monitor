@@ -1,0 +1,21 @@
+# 監視する企業の一覧。
+# manage.py で追加・削除するか、このファイルを直接編集してください。
+#
+# 各企業は 1つ以上の source を持ちます:
+#   type: rss   -> RSS/Atom フィードのURL（最も安定。推奨）
+#   type: html  -> ニュース一覧ページのURL。item_selector で記事リンクを指定
+#
+# 下記はサンプルです。実在のURLに置き換えてください。
+companies:
+  - id: example_rss
+    name: サンプル企業（RSS）
+    sources:
+      - type: rss
+        url: https://www.example.com/news/feed.xml
+
+  - id: example_html
+    name: サンプル企業（HTML）
+    sources:
+      - type: html
+        url: https://www.example.com/news/
+        item_selector: "a.news-list__link"
