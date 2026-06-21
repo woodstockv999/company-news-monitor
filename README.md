@@ -119,9 +119,9 @@ python3 -m venv .venv
 
 | Secret 名 | 値 |
 |---|---|
-| `SMTP_USER` | 送信元 Gmail アドレス（例: `jsbseven170@gmail.com`） |
+| `SMTP_USER` | 送信元 Gmail アドレス（例: `jdbsjbw@gmail.com`） |
 | `SMTP_PASS` | 上で取得した16桁アプリパスワード（空白は詰める） |
-| `MAIL_TO` | 通知先アドレス。カンマ区切りで複数可（例: `jsbseven170@gmail.com`） |
+| `MAIL_TO` | 通知先アドレス。カンマ区切りで複数可（例: `jsggvshhb@gmail.com`） |
 | `MAIL_FROM` | （任意）送信元表示。未設定なら `SMTP_USER` を使用 |
 
 ### 3. VPS にセルフホストランナーを設置（Xserver VPS / Ubuntu 24.04）
