@@ -1,7 +1,9 @@
 """RSS / HTML からニュース項目を取得する。"""
 from __future__ import annotations
 
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from urllib.parse import urljoin
 
 import feedparser
@@ -26,6 +28,7 @@ class Item:
     title: str
     url: str
     published: str = ""
+    published_dt: datetime | None = field(default=None, compare=False)
 
 
 def fetch_source(source: Source) -> list[Item]:
@@ -46,7 +49,18 @@ def _fetch_rss(source: Source) -> list[Item]:
         published = entry.get("published", entry.get("updated", ""))
         if not key:
             continue
-        items.append(Item(key=key.strip(), title=title, url=url, published=published))
+        parsed_tuple = entry.get("published_parsed") or entry.get("updated_parsed")
+        published_dt: datetime | None = None
+        if parsed_tuple:
+            try:
+                published_dt = datetime.fromtimestamp(
+                    time.mktime(parsed_tuple), tz=timezone.utc
+                )
+            except (OverflowError, OSError):
+                pass
+        items.append(
+            Item(key=key.strip(), title=title, url=url, published=published, published_dt=published_dt)
+        )
     return items
 
 

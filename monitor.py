@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from datetime import datetime, timedelta, timezone
 
 from app.config import load_companies, load_mail_config
 from app.notifier import render_text, send_email
@@ -17,6 +18,9 @@ from app.state import load_state, save_state
 
 # 1社あたりの既読履歴の上限。state.json が無限に肥大化するのを防ぐ。
 MAX_SEEN = 1000
+
+# 公開日がこの日数より古い記事は「新着」扱いしない（日付不明の記事は対象外）
+MAX_AGE_DAYS = 7
 
 logger = logging.getLogger("monitor")
 
@@ -48,7 +52,12 @@ def run(companies_path: str, state_path: str, dry_run: bool = False) -> int:
             logger.info("%s: ベースライン設定 (%d件)", company.id, len(uniq))
             continue
 
-        new_items = [it for key, it in uniq.items() if key not in seen]
+        cutoff = datetime.now(tz=timezone.utc) - timedelta(days=MAX_AGE_DAYS)
+        new_items = [
+            it for key, it in uniq.items()
+            if key not in seen
+            and (it.published_dt is None or it.published_dt >= cutoff)
+        ]
         if new_items:
             new_by_company[company] = new_items
             entry["seen"].extend(it.key for it in new_items)
