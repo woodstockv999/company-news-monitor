@@ -19,35 +19,67 @@ def _subject(new_by_company: dict[Company, list[Item]]) -> str:
     return f"[ニュース監視] {total}件の新着 ({len(new_by_company)}社)"
 
 
-def render_text(new_by_company: dict[Company, list[Item]]) -> str:
+def render_text(
+    new_by_company: dict[Company, list[Item]],
+    summaries: dict[str, str] | None = None,
+) -> str:
+    s = summaries or {}
     total = sum(len(v) for v in new_by_company.values())
     lines = [f"企業ニュース監視: {total}件の新着 ({len(new_by_company)}社)", ""]
     for company, items in new_by_company.items():
-        lines.append(f"■ {company.name}")
+        lines.append(f"■ {company.name}  ({len(items)}件)")
         for it in items:
             pub = f"  ({it.published})" if it.published else ""
-            lines.append(f"  - {it.title}{pub}")
+            lines.append(f"  ・{it.title}{pub}")
+            if it.key in s:
+                lines.append(f"    {s[it.key]}")
             lines.append(f"    {it.url}")
         lines.append("")
     return "\n".join(lines)
 
 
-def render_html(new_by_company: dict[Company, list[Item]]) -> str:
-    parts = ["<html><body style='font-family:sans-serif;line-height:1.6'>"]
-    parts.append(f"<h2>{html.escape(_subject(new_by_company))}</h2>")
+def render_html(
+    new_by_company: dict[Company, list[Item]],
+    summaries: dict[str, str] | None = None,
+) -> str:
+    s = summaries or {}
+    parts = [
+        "<html><body style='font-family:sans-serif;line-height:1.7;max-width:680px;margin:0 auto;padding:16px'>",
+        f"<h2 style='color:#1a1a2e'>{html.escape(_subject(new_by_company))}</h2>",
+    ]
     for company, items in new_by_company.items():
-        parts.append(f"<h3>{html.escape(company.name)}</h3><ul>")
+        parts.append(
+            f"<h3 style='color:#16213e;border-bottom:2px solid #e0e0e0;padding-bottom:4px'>"
+            f"{html.escape(company.name)} <small style='color:#888;font-size:0.75em'>({len(items)}件)</small></h3>"
+            f"<ul style='list-style:none;padding:0'>"
+        )
         for it in items:
-            pub = f" <span style='color:#888'>({html.escape(it.published)})</span>" if it.published else ""
+            pub = (
+                f" <span style='color:#999;font-size:0.8em'>({html.escape(it.published)})</span>"
+                if it.published else ""
+            )
             url = html.escape(it.url)
             title = html.escape(it.title)
-            parts.append(f"<li><a href='{url}'>{title}</a>{pub}</li>")
+            summary_html = (
+                f"<p style='margin:4px 0 8px;color:#444;font-size:0.9em'>{html.escape(s[it.key])}</p>"
+                if it.key in s else ""
+            )
+            parts.append(
+                f"<li style='margin-bottom:16px;padding:12px;background:#f9f9f9;border-radius:6px'>"
+                f"<a href='{url}' style='font-weight:bold;color:#0066cc;text-decoration:none'>{title}</a>{pub}"
+                f"{summary_html}"
+                f"</li>"
+            )
         parts.append("</ul>")
     parts.append("</body></html>")
     return "".join(parts)
 
 
-def send_email(new_by_company: dict[Company, list[Item]], mail: MailConfig) -> None:
+def send_email(
+    new_by_company: dict[Company, list[Item]],
+    mail: MailConfig,
+    summaries: dict[str, str] | None = None,
+) -> None:
     if not mail.recipients:
         raise RuntimeError("MAIL_TO（送信先）が設定されていません。")
     if not mail.user or not mail.password:
@@ -57,8 +89,8 @@ def send_email(new_by_company: dict[Company, list[Item]], mail: MailConfig) -> N
     msg["Subject"] = str(Header(_subject(new_by_company), "utf-8"))
     msg["From"] = mail.sender
     msg["To"] = ", ".join(mail.recipients)
-    msg.attach(MIMEText(render_text(new_by_company), "plain", "utf-8"))
-    msg.attach(MIMEText(render_html(new_by_company), "html", "utf-8"))
+    msg.attach(MIMEText(render_text(new_by_company, summaries), "plain", "utf-8"))
+    msg.attach(MIMEText(render_html(new_by_company, summaries), "html", "utf-8"))
 
     with smtplib.SMTP(mail.host, mail.port, timeout=30) as server:
         server.starttls()

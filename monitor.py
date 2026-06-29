@@ -11,6 +11,7 @@ import logging
 import sys
 from datetime import datetime, timedelta, timezone
 
+from app.ai import deduplicate, summarize
 from app.config import load_companies, load_mail_config
 from app.notifier import render_text, send_email
 from app.sources import fetch_source
@@ -72,13 +73,27 @@ def run(companies_path: str, state_path: str, dry_run: bool = False) -> int:
         del cstate[stale_id]
         logger.info("%s: config から削除されたため履歴を破棄", stale_id)
 
+    # --- 意味的重複除去 + Haiku 要約 ---
+    if new_by_company:
+        all_new = [it for items in new_by_company.values() for it in items]
+        kept_keys = {it.key for it in deduplicate(all_new)}
+        new_by_company = {
+            company: [it for it in items if it.key in kept_keys]
+            for company, items in new_by_company.items()
+            if any(it.key in kept_keys for it in items)
+        }
+        surviving = [it for items in new_by_company.values() for it in items]
+        summaries = summarize(surviving)
+    else:
+        summaries = {}
+
     total = sum(len(v) for v in new_by_company.values())
     if new_by_company:
         if dry_run:
-            print(render_text(new_by_company))
+            print(render_text(new_by_company, summaries))
             logger.info("[dry-run] メール送信はスキップしました")
         else:
-            send_email(new_by_company, load_mail_config())
+            send_email(new_by_company, load_mail_config(), summaries)
     else:
         logger.info("新着はありませんでした。メールは送信しません。")
 
