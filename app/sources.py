@@ -1,7 +1,7 @@
 """RSS / HTML からニュース項目を取得する。"""
 from __future__ import annotations
 
-import time
+import calendar
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from urllib.parse import urljoin
@@ -54,7 +54,7 @@ def _fetch_rss(source: Source) -> list[Item]:
         if parsed_tuple:
             try:
                 published_dt = datetime.fromtimestamp(
-                    time.mktime(parsed_tuple), tz=timezone.utc
+                    calendar.timegm(parsed_tuple), tz=timezone.utc
                 )
             except (OverflowError, OSError):
                 pass
@@ -65,13 +65,17 @@ def _fetch_rss(source: Source) -> list[Item]:
 
 
 def _fetch_html(source: Source) -> list[Item]:
+    if not source.item_selector:
+        print(f"WARNING: html source '{source.url}' has no item_selector configured, skipping")
+        return []
+
     resp = requests.get(
         source.url, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT
     )
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    selector = source.item_selector or "a"
+    selector = source.item_selector
     items: list[Item] = []
     seen: set[str] = set()
     for el in soup.select(selector):
